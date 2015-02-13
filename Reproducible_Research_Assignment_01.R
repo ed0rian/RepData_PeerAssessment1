@@ -21,7 +21,6 @@ dailyActivity <- activityData[,
                               list(avgSteps = mean(steps, na.rm = TRUE)), 
                               by = interval
                  ]
-
 dailyActivity[, 
               time := as.POSIXct(sprintf("%05.2f", 
                                          dailyActivity$interval/100
@@ -29,15 +28,6 @@ dailyActivity[,
                                  format = "%H.%M"
                       )
 ]
-
-dailyActivity[, 
-              time := as.POSIXct(sprintf("%05.2f", 
-                                         dailyActivity$interval/100
-                                 ), 
-                                 format = "%H.%M"
-              )
-              ]
-
 g <- qplot(time, 
            avgSteps, 
            data   = dailyActivity, 
@@ -47,7 +37,6 @@ g <- qplot(time,
 )
 gTitle <- 'Average number of steps per 5 minute interval'
 print(g + ggtitle(gTitle))
-
 intervalOfMaxSteps <- dailyActivity[which.max(dailyActivity$avgSteps), interval]
 
 avgSteps <- function(x) { return(dailyActivity[interval == x]$avgSteps) }

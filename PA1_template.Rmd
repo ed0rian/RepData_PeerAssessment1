@@ -16,11 +16,11 @@ library(ggplot2)
 
 
 ## Loading and preprocessing the data
-Extract the 'activity.csv' file from the zipfile
+Extract the 'activity.csv' file from the zipfile.
 ```{r, echo = TRUE, results = 'hide'}
 unzip(zipfile = 'activity.zip')
 ```
-Read data into a data table and convert the date into POSIXct
+Read data into a data table and convert the date into POSIXct.
 ```{r, echo = TRUE, results = 'hide'}
 activityData <- fread('activity.csv')
 activityData[, date := as.POSIXct(activityData[, date], format="%Y-%m-%d")]
@@ -29,15 +29,21 @@ activityData[, date := as.POSIXct(activityData[, date], format="%Y-%m-%d")]
 
 ## What is mean total number of steps taken per day?
 Aggregate the total number of steps per date into the variable 'totalSteps',
-plot a histogram and calculate mean and median of steps per day.
-```{r meanSteps, echo = TRUE}
+```{r stepsPerDay, echo = TRUE}
 stepsPerDay <- activityData[, list(totalSteps = sum(steps)), by = date]
+```
+plot a histogram,
+```{r stepsPerDayPlot, echo = TRUE}
 hist(stepsPerDay$totalSteps, 
      col  = 'Red',
      main = 'Histogram of total steps per day',
      xlab = 'Number of steps',
      ylab = 'Days'
 )
+```
+
+and calculate mean and median of steps per day.
+```{r meanStepsPerDay, echo = TRUE}
 meanStepsPerDay   <- as.integer(stepsPerDay[, mean(totalSteps, na.rm = TRUE)])
 medianStepsPerDay <- stepsPerDay[, median(totalSteps, na.rm = TRUE)]
 ```
@@ -45,10 +51,46 @@ Mean number of steps per day: `r meanStepsPerDay`.
 Median number of steps per day: `r medianStepsPerDay`.
 
 ## What is the average daily activity pattern?
+Aggregate the mean number of steps per 5 minute interval into the 
+variable 'avgSteps' and ignore NAs for now. Convert the interval into an extra 
+'time' variable. Since there is no time in R without date, the current date is
+used as date for that variable. Keep the (now redundant) 'interval' variable 
+since it is needed later to fill in the NAs. 
+```{r dailyActivity, echo = TRUE}
+dailyActivity <- activityData[, 
+                              list(avgSteps = mean(steps, na.rm = TRUE)), 
+                              by = interval
+                 ]
+dailyActivity[, 
+              time := as.POSIXct(sprintf("%05.2f", 
+                                         dailyActivity$interval/100
+                                 ), 
+                                 format = "%H.%M"
+                      )
+]
+```
+Plot the average number of steps per 5 minute interval. Ignore the date in the
+x-axis. I was unable to get rid of it in ggplot2. The assignment would also
+be o.k. if I just used the interval numer for the x-axis.
+```{r dailyActivityPlot, echo = TRUE}
+g <- qplot(time, 
+           avgSteps, 
+           data   = dailyActivity, 
+           geom   = 'line',
+           xlab   = 'Time',
+           ylab   = 'Average number of steps'
+)
+gTitle <- 'Average number of steps per 5 minute interval'
+print(g + ggtitle(gTitle))
+```   
 
+Find the interval containing the average maximum number of steps.
+```{r}
+intervalOfMaxSteps <- dailyActivity[which.max(dailyActivity$avgSteps), interval]
+```
+The average maximum number of steps are in interval `r intervalOfMaxSteps`.
 
-
-## Imputing missing values
+## Inputing missing values
 
 
 
