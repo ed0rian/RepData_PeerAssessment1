@@ -9,7 +9,7 @@ activityData[, date := as.POSIXct(activityData[, date], format="%Y-%m-%d")]
 
 stepsPerDay <- activityData[, list(totalSteps = sum(steps)), by = date]
 hist(stepsPerDay$totalSteps, 
-     col  = 'Red',
+     col  = 'cadetblue2',
      main = 'Histogram of total steps per day',
      xlab = 'Number of steps',
      ylab = 'Days'
@@ -52,7 +52,7 @@ for (i in missingRows) {
 
 cleanStepsPerDay <- cleanActivityData[, list(totalSteps = sum(steps)), by = date]
 hist(cleanStepsPerDay$totalSteps, 
-     col  = 'Red',
+     col  = 'cadetblue2',
      main = 'Histogram of total steps per day - NAs removed',
      xlab = 'Number of steps',
      ylab = 'Days'
@@ -72,7 +72,7 @@ cleanActivityData[,
 cleanActivityData[, dayType := as.factor(dayType)]
 
 cleanDailyActivity <- cleanActivityData[, 
-                              list(avgSteps = mean(steps, na.rm = TRUE)), 
+                              list(avgSteps = mean(steps)), 
                               by = list(interval, dayType)
                               ]
 cleanDailyActivity[, 

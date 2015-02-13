@@ -1,8 +1,9 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
+title: 'Reproducible Research: Peer Assessment 1'
+output:
   html_document:
-    keep_md: true
+    keep_md: yes
+  pdf_document: default
 ---
 Set locale so that names of weekdays appear in English,
 ```{r, echo = TRUE, results = 'hide'}
@@ -35,7 +36,7 @@ stepsPerDay <- activityData[, list(totalSteps = sum(steps)), by = date]
 plot a histogram,
 ```{r stepsPerDayPlot, echo = TRUE}
 hist(stepsPerDay$totalSteps, 
-     col  = 'Red',
+     col  = 'cadetblue2',
      main = 'Histogram of total steps per day',
      xlab = 'Number of steps',
      ylab = 'Days'
@@ -69,9 +70,10 @@ dailyActivity[,
                       )
 ]
 ```
-Plot the average number of steps per 5 minute interval. Ignore the date in the
-x-axis. I was unable to get rid of it in ggplot2. The assignment would also
-be o.k. if I just used the interval numer for the x-axis.
+Plot the average number of steps per 5 minute interval. Please ignore the date 
+in the x-axis tick labels. I was unable to get rid of it in ggplot2. The 
+assignment would also be o.k. if I had just used the interval number for the 
+x-axis.
 ```{r dailyActivityPlot, echo = TRUE}
 g <- qplot(time, 
            avgSteps, 
@@ -88,10 +90,107 @@ Find the interval containing the average maximum number of steps.
 ```{r}
 intervalOfMaxSteps <- dailyActivity[which.max(dailyActivity$avgSteps), interval]
 ```
-The average maximum number of steps are in interval `r intervalOfMaxSteps`.
+The maximum average number of steps are in interval `r intervalOfMaxSteps`.
 
-## Inputing missing values
+## Imputing missing values
+Define a function 'avgSteps' that returns the average number of steps 
+from table 'dailyActivity', for a given interval 'x'.
+```{r}
+avgSteps <- function(x) { return(dailyActivity[interval == x]$avgSteps) }
+```
+Calculate the total number of missing rows.
+```{r}
+missingRows <- which(is.na(activityData$steps))
+totalMissingRows <- length(missingRows)
+```
+`r totalMissingRows` instances of the 'steps' variable in the dataset are NA.
 
+Read the dataset into a new table 'cleanActivityData' and again replace the date
+by its POSIXct value.
+```{r}
+cleanActivityData <- fread('activity.csv')
+cleanActivityData[, date := as.POSIXct(cleanActivityData[, date], format="%Y-%m-%d")]
+```
+Replace each NA in the 'steps' column with the daily average for the
+coresponding interval. Row numbers of NAs, as well as the table of average steps
+per interval have already been obtained above.
+```{r}
+for (i in missingRows) {
+    cleanActivityData[i, steps := as.integer(avgSteps(cleanActivityData[i, interval]))]
+}
+cleanActivityData
+```
+Aggregate the total number of steps per date into the variable 'totalSteps',
+```{r}
+cleanStepsPerDay <- cleanActivityData[, list(totalSteps = sum(steps)), by = date]
+```
+plot a histogram,
+```{r cleanStepsPerDayPlot}
+hist(cleanStepsPerDay$totalSteps, 
+     col  = 'cadetblue2',
+     main = 'Histogram of total steps per day - NAs removed',
+     xlab = 'Number of steps',
+     ylab = 'Days'
+)
+```
 
+and calculate mean and median of steps per day.
+```{r}
+meanCleanStepsPerDay   <- as.integer(cleanStepsPerDay[, mean(totalSteps, na.rm = TRUE)])
+medianCleanStepsPerDay <- cleanStepsPerDay[, median(totalSteps, na.rm = TRUE)]
+```
+Mean number of steps per day, with NAs replaced by average interval:
+`r meanCleanStepsPerDay`, compared to `r meanStepsPerDay` before.  
+Median number of steps per day, with NAs replaced by average interval:
+`r medianCleanStepsPerDay`, compared to `r medianStepsPerDay` before.  
 
 ## Are there differences in activity patterns between weekdays and weekends?
+Create the new factor variable 'dayType' which indicates whether a given date
+is a weekday or a weekend day (Saturday or Sunday).
+```{r, echo = TRUE, results = 'hide'}
+cleanActivityData[, 
+                  dayType := ifelse(is.element(weekdays(cleanActivityData[, date]), 
+                                               c('Saturday', 'Sunday')
+                                              ), 
+                                    'Weekend', 
+                                    'Weekday'
+                             )
+                 ]
+cleanActivityData[, dayType := as.factor(dayType)]
+```
+Aggregate the mean number of steps per 5 minute interval and dayType into the 
+variable 'avgSteps'. Same as above, convert the interval into an extra 
+'time' variable. Since there is no time in R without date, the current date is
+used as date for that variable. Keep the (now redundant) 'interval' variable 
+for now.
+```{r}
+
+cleanDailyActivity <- cleanActivityData[, 
+                              list(avgSteps = mean(steps)), 
+                              by = list(interval, dayType)
+                              ]
+cleanDailyActivity[, 
+                   time := as.POSIXct(sprintf("%05.2f", 
+                                              cleanDailyActivity$interval/100
+                                             ), 
+                                      format = "%H.%M"
+                           )
+              ]
+```
+Plot the average number of steps per 5 minute interval, comparing weekdays with
+weekend days. Please ignore the date in the x-axis tick labels. I was unable to 
+get rid of it in ggplot2. The assignment would also be o.k. if I had just used 
+the interval number for the x-axis.
+```{r cleanDailyActivityPlot, echo = TRUE}
+
+g <- qplot(time, 
+           avgSteps, 
+           data   = cleanDailyActivity, 
+           geom   = 'line',
+           xlab   = 'Time',
+           ylab   = 'Average number of steps',
+           facets = dayType ~ .
+)
+gTitle <- 'Average number of steps per 5 minute interval - NAs removed'
+print(g + ggtitle(gTitle))
+```
