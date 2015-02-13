@@ -31,15 +31,24 @@ dailyActivity[,
                       )
 ]
 
-with(dailyActivity, 
-     plot(avgSteps ~ time, 
-          type = 'l',
-          col = 'Black',
-          main = 'Average Steps per 5 Minute Interval',
-          xlab = 'Time',
-          ylab = 'Average Steps'
-     )
+dailyActivity[, 
+              time := as.POSIXct(sprintf("%05.2f", 
+                                         dailyActivity$interval/100
+                                 ), 
+                                 format = "%H.%M"
+              )
+              ]
+
+g <- qplot(time, 
+           avgSteps, 
+           data   = dailyActivity, 
+           geom   = 'line',
+           xlab   = 'Time',
+           ylab   = 'Average number of steps'
 )
+gTitle <- 'Average number of steps per 5 minute interval'
+print(g + ggtitle(gTitle))
+
 intervalOfMaxSteps <- dailyActivity[which.max(dailyActivity$avgSteps), interval]
 
 avgSteps <- function(x) { return(dailyActivity[interval == x]$avgSteps) }
@@ -78,29 +87,21 @@ cleanDailyActivity <- cleanActivityData[,
                               list(avgSteps = mean(steps, na.rm = TRUE)), 
                               by = list(interval, dayType)
                               ]
-with(cleanDailyActivity[dayType == "Weekday"], 
-     plot(avgSteps ~ interval, 
-          type = 'l', 
-          col = 'Blue',
-          main = 'Average Steps per 5 Minute Interval - NAs Removed',
-          xlab = 'Time',
-          ylab = 'Average Steps'
-     )
-)
-with(cleanDailyActivity[dayType == "Weekend"], 
-     lines(avgSteps ~ interval, 
-           col = 'Red'
-     )
-)
+cleanDailyActivity[, 
+                   time := as.POSIXct(sprintf("%05.2f", 
+                                              cleanDailyActivity$interval/100
+                                             ), 
+                                      format = "%H.%M"
+                           )
+              ]
 
-g <- qplot(interval, 
+g <- qplot(time, 
            avgSteps, 
            data   = cleanDailyActivity, 
            geom   = 'line',
            xlab   = 'Time',
-           ylab   = 'Average Steps',
-           title  = 'Average Steps per 5 Minute Interval - NAs Removed',
+           ylab   = 'Average number of steps',
            facets = dayType ~ .
 )
-
-print(g)
+gTitle <- 'Average number of steps per 5 minute interval - NAs removed'
+print(g + ggtitle(gTitle))
