@@ -2,7 +2,6 @@ Sys.setlocale("LC_TIME", "C")
 
 library(data.table)
 library(ggplot2)
-# library(lubridate)
 
 unzip(zipfile = 'activity.zip')
 activityData <- fread('activity.csv')
@@ -15,7 +14,7 @@ hist(stepsPerDay$totalSteps,
      xlab = 'Number of steps',
      ylab = 'Days'
 )
-meanStepsPerDay   <- stepsPerDay[, mean(totalSteps, na.rm = TRUE)]
+meanStepsPerDay   <- as.integer(stepsPerDay[, mean(totalSteps, na.rm = TRUE)])
 medianStepsPerDay <- stepsPerDay[, median(totalSteps, na.rm = TRUE)]
 
 dailyActivity <- activityData[, 
@@ -70,7 +69,7 @@ hist(cleanStepsPerDay$totalSteps,
      ylab = 'Days'
 )
 
-meanCleanStepsPerDay   <- cleanStepsPerDay[, mean(totalSteps, na.rm = TRUE)]
+meanCleanStepsPerDay   <- as.integer(cleanStepsPerDay[, mean(totalSteps, na.rm = TRUE)])
 medianCleanStepsPerDay <- cleanStepsPerDay[, median(totalSteps, na.rm = TRUE)]
 
 cleanActivityData[, 

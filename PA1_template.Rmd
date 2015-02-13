@@ -4,15 +4,45 @@ output:
   html_document:
     keep_md: true
 ---
+Set locale so that names of weekdays appear in English,
+```{r, echo = TRUE, results = 'hide'}
+Sys.setlocale("LC_TIME", "C")
+```
+and load the neccessary libraries.
+```{r, echo = TRUE, results = 'hide'}
+library(data.table)
+library(ggplot2)
+```
 
 
 ## Loading and preprocessing the data
-
+Extract the 'activity.csv' file from the zipfile
+```{r, echo = TRUE, results = 'hide'}
+unzip(zipfile = 'activity.zip')
+```
+Read data into a data table and convert the date into POSIXct
+```{r, echo = TRUE, results = 'hide'}
+activityData <- fread('activity.csv')
+activityData[, date := as.POSIXct(activityData[, date], format="%Y-%m-%d")]
+```
 
 
 ## What is mean total number of steps taken per day?
-
-
+Aggregate the total number of steps per date into the variable 'totalSteps',
+plot a histogram and calculate mean and median of steps per day.
+```{r meanSteps, echo = TRUE}
+stepsPerDay <- activityData[, list(totalSteps = sum(steps)), by = date]
+hist(stepsPerDay$totalSteps, 
+     col  = 'Red',
+     main = 'Histogram of total steps per day',
+     xlab = 'Number of steps',
+     ylab = 'Days'
+)
+meanStepsPerDay   <- as.integer(stepsPerDay[, mean(totalSteps, na.rm = TRUE)])
+medianStepsPerDay <- stepsPerDay[, median(totalSteps, na.rm = TRUE)]
+```
+Mean number of steps per day: `r meanStepsPerDay`.   
+Median number of steps per day: `r medianStepsPerDay`.
 
 ## What is the average daily activity pattern?
 
